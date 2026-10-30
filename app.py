@@ -42,7 +42,7 @@ def ai_plan(message):
         raise ValueError('Invalid budget')
     return plan
 PRODUCTS = [
-    dict(id='p1', name='Ridgeline Trail Shoes', category='Footwear', price=125, stock=18, activities=['hiking', 'running'], features=['grip', 'lightweight'], weather=['dry'], icon='🥾', description='Grippy, lightweight shoes for fast days on dry trails.'),
+    dict(id='p1', name='Ridgeline Trail Shoes', category='Footwear', price=99, stock=25, activities=['hiking', 'running'], features=['grip', 'lightweight'], weather=['dry'], icon='🥾', description='Grippy, lightweight shoes for fast days on dry trails.'),
     dict(id='p2', name='Stormcrest Hiking Boots', category='Footwear', price=185, stock=9, activities=['hiking', 'backpacking'], features=['waterproof', 'grip', 'support'], weather=['rain', 'cold'], icon='🥾', description='Waterproof boots with support for wet trails and loaded packs.'),
     dict(id='p3', name='Cloudbreak Rain Shell', category='Apparel', price=110, stock=24, activities=['hiking', 'backpacking', 'running'], features=['waterproof', 'lightweight'], weather=['rain', 'wind'], icon='🧥', description='A packable waterproof layer for changing mountain weather.'),
     dict(id='p4', name='Daybreak 22L Pack', category='Packs', price=79, stock=15, activities=['hiking'], features=['lightweight', 'hydration-ready'], weather=['dry', 'rain'], icon='🎒', description='A compact day pack with room for layers, snacks and water.'),
