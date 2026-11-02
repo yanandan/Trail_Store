@@ -96,10 +96,22 @@ def agent(message, category='All'):
             if any(w in text for w in words):
                 requested = cat
                 break
+    # Fail closed on terms outside the small catalog rather than dropping them.
+    vocabulary = ' '.join(
+        ' '.join([p['name'], p['category'], *p['activities'], *p['features'], *p['weather']])
+        for p in PRODUCTS
+    )
+    vocabulary += ' ' + ' '.join(term for terms in aliases.values() for term in terms)
+    vocabulary += ' i me my we our a an the for to in on with and or of is it please find show recommend want need looking buy get some any gear equipment product products item items under below budget up max maximum dollar dollars cost price than less day walk wet waterproof winter warm windy rainy sunny jacket backpack pack footwear apparel shelter lightweight'
+    normalize = lambda word: word[:-1] if word.endswith('s') else word
+    known = {normalize(word) for word in re.findall(r'[a-z]+', vocabulary.lower())}
+    unsupported = sorted({word for word in re.findall(r'[a-z]+', text) if normalize(word) not in known})
     trace = [dict(tool='plan_request', detail=f"Activity: {', '.join(activities) or 'any'} · Weather: {', '.join(weather) or 'any'} · Category: {requested} · Per-item budget: {'$'+format(budget, 'g') if budget is not None else 'not set'}")]
     if planning_note:
         trace[0]['detail'] += ' · ' + planning_note
     candidates = [p for p in PRODUCTS if (requested == 'All' or p['category'] == requested) and (not activities or any(a in p['activities'] for a in activities)) and (not weather or all(w in p['weather'] for w in weather))]
+    if unsupported:
+        candidates = []
     trace.append(dict(tool='query_knowledge_graph', detail=f"Traversed SUITED_FOR, SUITS_WEATHER and IN_CATEGORY edges; found {len(candidates)} matching products."))
     available = [p for p in candidates if p['stock'] > 0 and (budget is None or p['price'] <= budget)]
     trace.append(dict(tool='check_inventory_and_price', detail=f"{len(available)} products in stock and within the per-item budget. No constraints were relaxed."))
@@ -111,6 +123,8 @@ def agent(message, category='All'):
         recommendations.append(dict(**p, evidence=evidence, reason='; '.join([f"Suited for {a}" for a in activities if a in p['activities']] + [f"Suitable for {w}" for w in weather] + [f"{p['stock']} in stock", f"${p['price']}" ])))
     trace.append(dict(tool='explain_recommendations', detail=f"Returned {len(recommendations)} recommendations with graph evidence. Inventory and prices are sample data."))
     answer = ('Here are the strongest matches from our sample catalog. Your budget applies to each item, not a complete kit.' if recommendations else 'No in-stock products match all those constraints. Try a higher per-item budget or a different category or weather condition.')
+    if unsupported:
+        answer = 'No catalog match for: ' + ', '.join(unsupported) + '. This local demo only supports the products and terms in its sample catalog.'
     if not activities:
         answer += ' Tell me your activity for more focused recommendations.'
     return dict(answer=answer, products=recommendations, trace=trace, constraints=dict(activities=activities, weather=weather, budget=budget, category=requested), mode=mode)
